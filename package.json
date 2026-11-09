@@ -1,6 +1,6 @@
 {
   "name": "dinoloader",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.0-alpha",
   "description": "A lightweight, customizable retro pixel-art dinosaur loading component with zero dependencies",
   "type": "module",
   "main": "./dist/index.cjs",
