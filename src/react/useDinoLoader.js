@@ -7,37 +7,46 @@ import { createDinoLoader } from '../dinoloader/index.js';
  */
 export function useDinoLoader(initialOptions = {}) {
   const loaderRef = useRef(null);
+  const optionsRef = useRef(initialOptions);
+  const [loaderInstance, setLoaderInstance] = useState(null);
   const [progress, setProgress] = useState(initialOptions.initialProgress || 0);
   const [state, setState] = useState('idle');
 
+  // Keep options reference synchronized with latest props/callbacks
+  useEffect(() => {
+    optionsRef.current = initialOptions;
+  }, [initialOptions]);
+
   useEffect(() => {
     const loader = createDinoLoader({
-      ...initialOptions,
+      ...optionsRef.current,
       onProgress: (p) => {
         setProgress(p);
-        if (typeof initialOptions.onProgress === 'function') {
-          initialOptions.onProgress(p);
+        if (typeof optionsRef.current?.onProgress === 'function') {
+          optionsRef.current.onProgress(p);
         }
       },
       onComplete: () => {
         setState('complete');
-        if (typeof initialOptions.onComplete === 'function') {
-          initialOptions.onComplete();
+        if (typeof optionsRef.current?.onComplete === 'function') {
+          optionsRef.current.onComplete();
         }
       },
       onError: (err) => {
         setState('error');
-        if (typeof initialOptions.onError === 'function') {
-          initialOptions.onError(err);
+        if (typeof optionsRef.current?.onError === 'function') {
+          optionsRef.current.onError(err);
         }
       }
     });
 
     loaderRef.current = loader;
+    setLoaderInstance(loader);
 
     return () => {
       loader.destroy();
       loaderRef.current = null;
+      setLoaderInstance(null);
     };
   }, []); // Mounts once and handles destruction on unmount
 
@@ -51,7 +60,7 @@ export function useDinoLoader(initialOptions = {}) {
   const reset = useCallback((init) => loaderRef.current?.reset(init), []);
 
   return {
-    loader: loaderRef.current,
+    loader: loaderInstance || loaderRef.current,
     show,
     hide,
     update,

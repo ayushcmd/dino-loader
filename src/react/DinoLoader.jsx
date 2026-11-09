@@ -143,7 +143,7 @@ export function DinoLoader({
     } else if (progress === false) {
       loader.setOptions({ progress: false });
     }
-  }, [progress, message]);
+  }, [progress]);
 
   // 4. React to message changes
   useEffect(() => {

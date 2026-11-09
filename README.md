@@ -20,7 +20,23 @@ Inspired by classic 8-bit endless runners, DinoLoader transforms boring loading 
 - **📏 Flexible Sizing & Modes**: `small`, `medium`, and `large` presets; `inline` (embeddable widget) and `fullscreen` (modal overlay) display modes.
 - **📊 Determinate & Indeterminate**: Live numerical progress bar or classic retro scanning block.
 - **♿ Accessible**: Full `prefers-reduced-motion` compliance and ARIA progressbar attributes (`aria-valuenow`, `aria-live`).
-- **📦 Dual Distribution**: Built with future npm distribution in mind (`createDinoLoader` for Vanilla JS and planned `<DinoLoader />` for React).
+- **📦 Dual First-Class Support**: Zero-dependency Vanilla JS engine (`createDinoLoader`) and declarative React adapter (`<DinoLoader />` & `useDinoLoader` hook) for React 18 & 19.
+
+---
+
+## 📦 Installation
+
+```bash
+npm install dinoloader
+```
+
+```bash
+pnpm add dinoloader
+```
+
+```bash
+yarn add dinoloader
+```
 
 ---
 
@@ -34,7 +50,8 @@ Inspired by classic 8-bit endless runners, DinoLoader transforms boring loading 
 ### 1. Clone & Install
 
 ```bash
-cd C:\Projects\npm\DinoLoader
+git clone https://github.com/ayushcmd/dino-loader.git
+cd dino-loader
 npm install
 ```
 
@@ -58,13 +75,7 @@ Production output will be generated in `dist/`.
 
 ## 📖 Vanilla JavaScript API
 
-### Installation (Future NPM Package)
-
-```bash
-npm install dinoloader
-```
-
-### Basic Usage
+### Usage
 
 ```javascript
 import { createDinoLoader } from "dinoloader";
@@ -323,4 +334,4 @@ All pixel art in DinoLoader is 100% original and generated as crisp SVG vector p
 
 ## 📄 License
 
-MIT © [DinoLoader Contributors](https://github.com/dinoloader/dinoloader)
+MIT © [Ayush Kumar](https://github.com/ayushcmd/dino-loader)
