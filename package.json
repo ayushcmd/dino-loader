@@ -1,0 +1,49 @@
+{
+  "name": "dinoloader",
+  "version": "0.1.0-alpha",
+  "description": "A lightweight, customizable retro pixel-art dinosaur loading component with zero dependencies",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "pretest": "npm run build",
+    "test": "node --test test/*.test.js",
+    "build": "vite build && node -e \"fs.copyFileSync('src/dinoloader/types.d.ts', 'dist/index.d.ts')\"",
+    "build:demo": "vite build --config vite.demo.config.js",
+    "prepare": "npm run build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "loader",
+    "loading",
+    "spinner",
+    "dinosaur",
+    "pixel-art",
+    "retro",
+    "8bit",
+    "progress-bar",
+    "vanilla-js",
+    "zero-dependencies"
+  ],
+  "author": "DinoLoader Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^8.3.6"
+  }
+}

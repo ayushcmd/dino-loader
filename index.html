@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en" data-playground-theme="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DinoLoader — Retro Pixel-Art Loading Experience</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'><rect x='15' y='2' width='6' height='4' fill='%233b82f6'/><rect x='10' y='12' width='12' height='4' fill='%233b82f6'/></svg>" />
+    <link rel="stylesheet" href="./src/playground.css" />
+  </head>
+  <body>
+    <!-- Top Header Bar -->
+    <header class="pg-header">
+      <div class="pg-header-inner">
+        <div class="pg-brand">
+          <div class="pg-logo-badge" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <rect x="14" y="2" width="7" height="5"/>
+              <rect x="12" y="7" width="9" height="3"/>
+              <rect x="2" y="10" width="18" height="5"/>
+              <rect x="6" y="15" width="10" height="3"/>
+              <rect x="6" y="18" width="3" height="3"/>
+              <rect x="12" y="18" width="3" height="3"/>
+            </svg>
+          </div>
+          <div>
+            <div class="pg-title">
+              DinoLoader
+              <span class="pg-version-tag">v0.1.0-alpha</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pg-header-actions">
+          <span class="pg-badge-npm">npm i dinoloader</span>
+          <button type="button" class="pg-btn-sm" id="btn-theme-toggle" title="Toggle playground light/dark theme">
+            <span id="theme-icon">☀️</span>
+            <span id="theme-label">Light Mode</span>
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Playground Workspace -->
+    <main class="pg-main">
+      <!-- Left Column: Live Preview & Actions -->
+      <section class="pg-preview-column">
+        <!-- Live Preview Stage Frame -->
+        <div class="pg-stage-wrapper">
+          <div class="pg-stage-toolbar">
+            <div class="pg-pill-group" role="tablist" aria-label="Preview Mode">
+              <button type="button" class="pg-pill-btn active" id="tab-mode-inline">Inline Card</button>
+              <button type="button" class="pg-pill-btn" id="tab-mode-sim-fullscreen">Simulated Fullscreen</button>
+            </div>
+
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" class="pg-btn-sm" id="btn-launch-fullscreen" title="Launch genuine full-screen overlay">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"></path>
+                </svg>
+                <span>Live Window Overlay</span>
+              </button>
+              <button type="button" class="pg-btn-sm" id="btn-reduced-motion-toggle" title="Test reduced motion accessibility">
+                <span>Motion:</span>
+                <strong id="label-motion-state">Normal</strong>
+              </button>
+            </div>
+          </div>
+
+          <!-- Canvas where DinoLoader is mounted -->
+          <div class="pg-stage-canvas" id="dino-loader-mount">
+            <!-- DinoLoader mounts here -->
+          </div>
+        </div>
+
+        <!-- Action Control Bar -->
+        <div class="pg-actions-bar">
+          <div class="pg-actions-header">
+            <span class="pg-actions-title">Demo API Actions</span>
+            <span style="font-size: 11.5px; color: var(--pg-text-muted);">Test component lifecycle methods</span>
+          </div>
+
+          <div class="pg-btn-grid">
+            <button type="button" class="pg-btn pg-btn-primary" id="btn-action-start">
+              <span>▶</span> Start
+            </button>
+            <button type="button" class="pg-btn pg-btn-secondary" id="btn-action-simulate" style="border-color: var(--pg-primary); color: var(--pg-primary);">
+              <span>⚡</span> Simulate Loading
+            </button>
+            <button type="button" class="pg-btn pg-btn-success" id="btn-action-complete">
+              <span>✓</span> Complete
+            </button>
+            <button type="button" class="pg-btn pg-btn-danger" id="btn-action-error">
+              <span>⚠</span> Trigger Error
+            </button>
+            <button type="button" class="pg-btn pg-btn-secondary" id="btn-action-reset">
+              <span>⟲</span> Reset Demo
+            </button>
+          </div>
+
+          <!-- Simulation Indicator Banner -->
+          <div class="pg-sim-banner" id="sim-status-banner">
+            <div>
+              <span class="pg-sim-indicator"></span>
+              <span id="sim-status-text">Simulating staged network loading...</span>
+            </div>
+            <button type="button" class="pg-btn-sm" id="btn-cancel-simulation" style="padding: 2px 8px; font-size: 11px;">
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <!-- Code Snippet Generator Card -->
+        <div class="pg-code-card">
+          <div class="pg-code-header">
+            <div class="pg-pill-group">
+              <button type="button" class="pg-pill-btn active" id="tab-code-vanilla">Vanilla JS</button>
+              <button type="button" class="pg-pill-btn" id="tab-code-react">React Component</button>
+            </div>
+            <button type="button" class="pg-btn-sm" id="btn-copy-code">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span id="label-copy-code">Copy Code</span>
+            </button>
+          </div>
+          <pre class="pg-code-pre"><code id="code-snippet-output">// Live code snippet will appear here</code></pre>
+        </div>
+      </section>
+
+      <!-- Right Column: Interactive Customization Controls -->
+      <aside class="pg-controls-column">
+        <!-- Card 1: Display Mode & Theme -->
+        <div class="pg-control-card">
+          <div class="pg-control-card-title">1. Appearance & Theme</div>
+
+          <!-- Display Mode -->
+          <div class="pg-form-group">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label">Display Mode</label>
+              <span class="pg-form-value" id="val-mode">inline</span>
+            </div>
+            <div class="pg-segmented-control" id="ctrl-mode">
+              <button type="button" class="pg-segmented-btn active" data-val="inline">Inline</button>
+              <button type="button" class="pg-segmented-btn" data-val="fullscreen">Fullscreen</button>
+            </div>
+          </div>
+
+          <!-- Theme -->
+          <div class="pg-form-group">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label">Theme</label>
+              <span class="pg-form-value" id="val-theme">dark</span>
+            </div>
+            <div class="pg-segmented-control" id="ctrl-theme">
+              <button type="button" class="pg-segmented-btn active" data-val="dark">Dark</button>
+              <button type="button" class="pg-segmented-btn" data-val="light">Light</button>
+              <button type="button" class="pg-segmented-btn" data-val="auto">Auto</button>
+            </div>
+          </div>
+
+          <!-- Size -->
+          <div class="pg-form-group">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label">Size</label>
+              <span class="pg-form-value" id="val-size">medium</span>
+            </div>
+            <div class="pg-segmented-control" id="ctrl-size">
+              <button type="button" class="pg-segmented-btn" data-val="small">Small</button>
+              <button type="button" class="pg-segmented-btn active" data-val="medium">Medium</button>
+              <button type="button" class="pg-segmented-btn" data-val="large">Large</button>
+            </div>
+          </div>
+
+          <!-- Speed -->
+          <div class="pg-form-group">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label">Animation Speed</label>
+              <span class="pg-form-value" id="val-speed">normal</span>
+            </div>
+            <div class="pg-segmented-control" id="ctrl-speed">
+              <button type="button" class="pg-segmented-btn" data-val="slow">Slow</button>
+              <button type="button" class="pg-segmented-btn active" data-val="normal">Normal</button>
+              <button type="button" class="pg-segmented-btn" data-val="fast">Fast</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 2: Progress & Percentage -->
+        <div class="pg-control-card">
+          <div class="pg-control-card-title">2. Progress Indicator</div>
+
+          <!-- Progress Mode -->
+          <div class="pg-form-group">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label">Progress Mode</label>
+              <span class="pg-form-value" id="val-progress-mode">Determinate</span>
+            </div>
+            <div class="pg-segmented-control" id="ctrl-progress-mode">
+              <button type="button" class="pg-segmented-btn active" data-val="determinate">Determinate</button>
+              <button type="button" class="pg-segmented-btn" data-val="indeterminate">Indeterminate</button>
+            </div>
+          </div>
+
+          <!-- Progress Percentage Slider -->
+          <div class="pg-form-group" id="group-progress-slider">
+            <div class="pg-form-label-row">
+              <label class="pg-form-label" for="slider-progress">Progress (0–100%)</label>
+              <span class="pg-form-value" id="val-progress-pct">35%</span>
+            </div>
+            <div class="pg-range-wrapper">
+              <input type="range" class="pg-range" id="slider-progress" min="0" max="100" value="35" step="1" />
+              <input type="number" class="pg-num-input" id="input-progress-num" min="0" max="100" value="35" />
+            </div>
+          </div>
+
+          <!-- Show/Hide Percentage Toggle -->
+          <div class="pg-toggle-row">
+            <label class="pg-form-label" for="toggle-show-percentage">Show Percentage Text</label>
+            <label class="pg-switch">
+              <input type="checkbox" id="toggle-show-percentage" checked />
+              <span class="pg-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card 3: Environment Obstacles -->
+        <div class="pg-control-card">
+          <div class="pg-control-card-title">3. Environment & Obstacles</div>
+
+          <!-- Enable Cactus -->
+          <div class="pg-toggle-row">
+            <label class="pg-form-label" for="toggle-cactus">Enable Cactus Obstacles</label>
+            <label class="pg-switch">
+              <input type="checkbox" id="toggle-cactus" checked />
+              <span class="pg-slider"></span>
+            </label>
+          </div>
+
+          <!-- Enable Clouds -->
+          <div class="pg-toggle-row">
+            <label class="pg-form-label" for="toggle-clouds">Enable Pixel Clouds</label>
+            <label class="pg-switch">
+              <input type="checkbox" id="toggle-clouds" checked />
+              <span class="pg-slider"></span>
+            </label>
+          </div>
+
+          <!-- Auto-Jump Cactus -->
+          <div class="pg-toggle-row">
+            <label class="pg-form-label" for="toggle-autojump">Auto-Jump Obstacles</label>
+            <label class="pg-switch">
+              <input type="checkbox" id="toggle-autojump" checked />
+              <span class="pg-slider"></span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Card 4: Editable Message -->
+        <div class="pg-control-card">
+          <div class="pg-control-card-title">4. Loading Message</div>
+
+          <div class="pg-form-group">
+            <label class="pg-form-label" for="input-message">Custom Message</label>
+            <input type="text" class="pg-text-input" id="input-message" value="Loading your experience..." placeholder="Type a custom loading message..." />
+
+            <div class="pg-preset-pills">
+              <button type="button" class="pg-preset-pill" data-msg="Loading your experience...">Default</button>
+              <button type="button" class="pg-preset-pill" data-msg="Excavating fossil layers...">Fossils</button>
+              <button type="button" class="pg-preset-pill" data-msg="Synthesizing amber DNA...">Amber DNA</button>
+              <button type="button" class="pg-preset-pill" data-msg="Calibrating Jurassic physics...">Jurassic</button>
+              <button type="button" class="pg-preset-pill" data-msg="Connecting to prehistoric cloud...">Cloud</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card 5: Architecture & Specs -->
+        <div class="pg-control-card" style="font-size: 12px; color: var(--pg-text-muted);">
+          <div class="pg-control-card-title">Package Highlights</div>
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; justify-content: space-between;">
+              <span>Runtime dependencies:</span>
+              <strong style="color: var(--pg-success);">0 dependencies</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Graphics format:</span>
+              <strong style="color: var(--pg-text);">100% Crisp SVG</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Bundle footprint:</span>
+              <strong style="color: var(--pg-text);">&lt; 3.8 KB (gzip)</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between;">
+              <span>Accessibility:</span>
+              <strong style="color: var(--pg-primary);">prefers-reduced-motion</strong>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- Toast Notification Element -->
+    <div class="pg-toast" id="pg-toast">
+      <span>Copied code to clipboard!</span>
+    </div>
+
+    <!-- Footer -->
+    <footer class="pg-footer">
+      DinoLoader — Original pixel-art loading component. Zero dependencies. MIT Licensed.
+    </footer>
+
+    <script type="module" src="./src/main.js"></script>
+  </body>
+</html>

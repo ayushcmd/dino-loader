@@ -1,0 +1,729 @@
+/**
+ * DinoLoader Component Styles
+ * Strictly scoped under .dinoloader and .dl-* to eliminate conflicts.
+ * Fixed ground rendering, flush baseline alignment, and obstacle spawning.
+ */
+
+/* ==========================================================================
+   Root Variables & Themes
+   ========================================================================== */
+
+.dinoloader {
+  /* Default Dark Charcoal Theme */
+  --dl-bg: #0d1117;
+  --dl-fg: #e6edf3;
+  --dl-muted: #8b949e;
+  --dl-accent: #58a6ff;
+  --dl-border: #30363d;
+  --dl-bar-bg: #161b22;
+  --dl-error: #f85149;
+  --dl-success: #3fb950;
+  
+  /* Speeds */
+  --dl-speed-step: 0.20s;
+  --dl-ground-speed: 1.5s;
+  --dl-cactus-speed: 3.2s;
+  --dl-cloud-speed-1: 26s;
+  --dl-cloud-speed-2: 38s;
+
+  /* Sizing (Medium by default) */
+  --dl-stage-height: 130px;
+  --dl-dino-width: 66px;
+  --dl-dino-height: 63.25px; /* 24:23 ratio */
+  --dl-ground-bottom: 22px;
+  --dl-ground-height: 2px;
+  --dl-ground-texture-h: 8px;
+  --dl-font-size: 13px;
+  --dl-progress-height: 10px;
+
+  box-sizing: border-box;
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  color: var(--dl-fg);
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.dinoloader *,
+.dinoloader *::before,
+.dinoloader *::after {
+  box-sizing: border-box;
+}
+
+/* Light Theme */
+.dinoloader[data-theme="light"] {
+  --dl-bg: #f6f8fa;
+  --dl-fg: #1f2328;
+  --dl-muted: #656d76;
+  --dl-accent: #0969da;
+  --dl-border: #d0d7de;
+  --dl-bar-bg: #eaeef2;
+  --dl-error: #cf222e;
+  --dl-success: #1a7f37;
+}
+
+/* Auto Theme follows system preferences */
+@media (prefers-color-scheme: light) {
+  .dinoloader[data-theme="auto"] {
+    --dl-bg: #f6f8fa;
+    --dl-fg: #1f2328;
+    --dl-muted: #656d76;
+    --dl-accent: #0969da;
+    --dl-border: #d0d7de;
+    --dl-bar-bg: #eaeef2;
+    --dl-error: #cf222e;
+    --dl-success: #1a7f37;
+  }
+}
+
+/* Small Preset */
+.dinoloader[data-size="small"] {
+  --dl-stage-height: 100px;
+  --dl-dino-width: 48px;
+  --dl-dino-height: 46px;
+  --dl-ground-bottom: 18px;
+  --dl-ground-height: 2px;
+  --dl-font-size: 11px;
+  --dl-progress-height: 8px;
+}
+
+/* Medium Preset */
+.dinoloader[data-size="medium"] {
+  --dl-stage-height: 130px;
+  --dl-dino-width: 66px;
+  --dl-dino-height: 63.25px;
+  --dl-ground-bottom: 22px;
+  --dl-ground-height: 2px;
+  --dl-font-size: 13px;
+  --dl-progress-height: 10px;
+}
+
+/* Large Preset */
+.dinoloader[data-size="large"] {
+  --dl-stage-height: 160px;
+  --dl-dino-width: 84px;
+  --dl-dino-height: 80.5px;
+  --dl-ground-bottom: 26px;
+  --dl-ground-height: 2px;
+  --dl-font-size: 15px;
+  --dl-progress-height: 12px;
+}
+
+/* Speed: Slow */
+.dinoloader[data-speed="slow"] {
+  --dl-speed-step: 0.34s;
+  --dl-ground-speed: 2.6s;
+  --dl-cactus-speed: 5.4s;
+  --dl-cloud-speed-1: 40s;
+  --dl-cloud-speed-2: 56s;
+}
+
+/* Speed: Normal */
+.dinoloader[data-speed="normal"] {
+  --dl-speed-step: 0.20s;
+  --dl-ground-speed: 1.5s;
+  --dl-cactus-speed: 3.2s;
+  --dl-cloud-speed-1: 26s;
+  --dl-cloud-speed-2: 38s;
+}
+
+/* Speed: Fast */
+.dinoloader[data-speed="fast"] {
+  --dl-speed-step: 0.11s;
+  --dl-ground-speed: 0.85s;
+  --dl-cactus-speed: 1.8s;
+  --dl-cloud-speed-1: 15s;
+  --dl-cloud-speed-2: 22s;
+}
+
+/* ==========================================================================
+   Display Modes (Inline vs Fullscreen)
+   ========================================================================== */
+
+.dinoloader[data-mode="inline"] {
+  position: relative;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto;
+  background-color: var(--dl-bg);
+  border: 1px solid var(--dl-border);
+  border-radius: 6px;
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.dinoloader[data-mode="fullscreen"] {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: var(--dl-z-index, 999999);
+  background-color: var(--dl-bg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  overflow: hidden;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Fullscreen close button */
+.dl-fullscreen-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: var(--dl-bar-bg);
+  border: 1px solid var(--dl-border);
+  color: var(--dl-muted);
+  font-size: 12px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: none;
+  font-family: inherit;
+  transition: all 0.15s ease;
+  z-index: 100;
+}
+
+.dinoloader[data-mode="fullscreen"] .dl-fullscreen-close {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dl-fullscreen-close:hover {
+  color: var(--dl-fg);
+  border-color: var(--dl-fg);
+}
+
+/* ==========================================================================
+   Animation Stage Viewport
+   ========================================================================== */
+
+.dl-stage {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  height: var(--dl-stage-height);
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ==========================================================================
+   1. Ground Rendering (Continuous Horizontal Line & Scrolling Texture)
+   ========================================================================== */
+
+.dl-ground-layer {
+  position: absolute;
+  bottom: var(--dl-ground-bottom);
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: calc(var(--dl-ground-height) + var(--dl-ground-texture-h));
+  overflow: hidden;
+  color: var(--dl-fg);
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Unbroken, 100% continuous horizontal ground line spanning entire viewport */
+.dl-ground-baseline {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  height: var(--dl-ground-height);
+  background-color: var(--dl-fg);
+  image-rendering: pixelated;
+  z-index: 2;
+}
+
+/* Ground texture track drifting beneath the line */
+.dl-ground-texture-track {
+  position: absolute;
+  top: var(--dl-ground-height);
+  left: 0;
+  height: var(--dl-ground-texture-h);
+  display: flex;
+  opacity: 0.55;
+  will-change: transform;
+  z-index: 1;
+}
+
+.dinoloader[data-state="running"] .dl-ground-texture-track {
+  animation: dl-ground-tex-scroll var(--dl-ground-speed) linear infinite;
+}
+
+.dl-ground-texture-strip {
+  width: 240px;
+  height: var(--dl-ground-texture-h);
+  flex-shrink: 0;
+}
+
+.dl-ground-texture-svg {
+  width: 240px;
+  height: 100%;
+  display: block;
+}
+
+/* 240px exact seamless tile scroll with 0 gaps */
+@keyframes dl-ground-tex-scroll {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(-240px, 0, 0);
+  }
+}
+
+/* Pause ground scrolling on error or completion */
+.dinoloader[data-state="error"] .dl-ground-texture-track,
+.dinoloader[data-state="complete"] .dl-ground-texture-track {
+  animation-play-state: paused !important;
+}
+
+/* ==========================================================================
+   2. Dinosaur Positioning (Directly on Ground Baseline)
+   ========================================================================== */
+
+.dl-dino-container {
+  position: absolute;
+  /* Feet sit directly flush on top of the ground line */
+  bottom: calc(var(--dl-ground-bottom) + var(--dl-ground-height));
+  left: 16%;
+  width: var(--dl-dino-width);
+  height: var(--dl-dino-height);
+  z-index: 10;
+  will-change: transform;
+}
+
+.dl-dino-jumper {
+  width: 100%;
+  height: 100%;
+}
+
+.dl-dino-svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+/* Frame visibility rules */
+.dl-dino-f {
+  display: none;
+}
+
+.dl-dino-run-group {
+  display: none;
+}
+
+/* State: Running (steady stride on the ground line) */
+.dinoloader[data-state="running"] .dl-dino-run-group {
+  display: block;
+}
+
+.dinoloader[data-state="running"] .dl-dino-run-1 {
+  display: block;
+  animation: dl-step-1 var(--dl-speed-step) steps(1) infinite;
+}
+
+.dinoloader[data-state="running"] .dl-dino-run-2 {
+  display: block;
+  animation: dl-step-2 var(--dl-speed-step) steps(1) infinite;
+}
+
+@keyframes dl-step-1 {
+  0%, 49.99% { opacity: 1; visibility: visible; }
+  50%, 100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes dl-step-2 {
+  0%, 49.99% { opacity: 0; visibility: hidden; }
+  50%, 100% { opacity: 1; visibility: visible; }
+}
+
+/* State: Idle / Stand */
+.dinoloader[data-state="idle"] .dl-dino-run-group {
+  display: block;
+}
+.dinoloader[data-state="idle"] .dl-dino-run-1 {
+  display: block;
+  opacity: 1;
+}
+
+/* State: Error (tripped on ground with dizzy 'X' eyes) */
+.dinoloader[data-state="error"] .dl-dino-crash {
+  display: block;
+  opacity: 1;
+  color: var(--dl-error);
+  animation: dl-shake 0.4s ease-in-out;
+}
+
+/* State: Complete (victory cheer) */
+.dinoloader[data-state="complete"] .dl-dino-win {
+  display: block;
+  opacity: 1;
+  color: var(--dl-success);
+  animation: dl-celebrate-hop 0.6s ease-out;
+}
+
+@keyframes dl-celebrate-hop {
+  0% { transform: translateY(0); }
+  35% { transform: translateY(-16px); }
+  65% { transform: translateY(0); }
+  80% { transform: translateY(-6px); }
+  100% { transform: translateY(0); }
+}
+
+@keyframes dl-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+/* ==========================================================================
+   3. Cactus Obstacles (Sit Directly on Ground, Smooth Right-to-Left Traverse)
+   ========================================================================== */
+
+.dl-cactus-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 8;
+}
+
+.dinoloader[data-cactus="false"] .dl-cactus-layer {
+  display: none;
+}
+
+.dl-cactus-item {
+  position: absolute;
+  /* Base sits directly flush on top of the ground line */
+  bottom: calc(var(--dl-ground-bottom) + var(--dl-ground-height));
+  will-change: left, transform;
+  display: block;
+}
+
+.dl-cactus-svg {
+  display: block;
+  shape-rendering: crispEdges;
+}
+
+.dl-cactus-1 {
+  width: 24px;
+  height: 36px;
+}
+
+.dl-cactus-2 {
+  width: 36px;
+  height: 28px;
+}
+
+/* Cactus 1 moves from right edge to past left edge */
+.dinoloader[data-state="running"][data-cactus="true"] .dl-cactus-1 {
+  animation: dl-cactus-traverse var(--dl-cactus-speed) linear infinite;
+}
+
+/* Cactus 2 moves exactly 50% staggered for consistent spacing */
+.dinoloader[data-state="running"][data-cactus="true"] .dl-cactus-2 {
+  animation: dl-cactus-traverse var(--dl-cactus-speed) linear infinite;
+  animation-delay: calc(var(--dl-cactus-speed) * -0.5);
+}
+
+@keyframes dl-cactus-traverse {
+  0% {
+    left: 100%;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    left: 0%;
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+/* Pause cactus movement when in error or complete state */
+.dinoloader[data-state="error"] .dl-cactus-item,
+.dinoloader[data-state="complete"] .dl-cactus-item {
+  animation-play-state: paused !important;
+}
+
+/* ==========================================================================
+   4. Clouds (Upper Background Sky, No Overlap with Dino or Ground)
+   ========================================================================== */
+
+.dl-clouds-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 42px;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.dinoloader[data-clouds="false"] .dl-clouds-layer {
+  display: none;
+}
+
+.dl-cloud {
+  position: absolute;
+  color: var(--dl-muted);
+  will-change: left, transform;
+}
+
+.dl-cloud-svg {
+  display: block;
+  shape-rendering: crispEdges;
+  width: 100%;
+  height: 100%;
+}
+
+.dl-cloud-1 {
+  top: 8px;
+  width: 44px;
+  height: 13px;
+  opacity: 0.45;
+  animation: dl-cloud-traverse var(--dl-cloud-speed-1) linear infinite;
+  animation-delay: calc(var(--dl-cloud-speed-1) * -0.15);
+}
+
+.dl-cloud-2 {
+  top: 22px;
+  width: 34px;
+  height: 9px;
+  opacity: 0.35;
+  animation: dl-cloud-traverse var(--dl-cloud-speed-2) linear infinite;
+  animation-delay: calc(var(--dl-cloud-speed-2) * -0.65);
+}
+
+@keyframes dl-cloud-traverse {
+  0% {
+    left: 100%;
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    left: 0%;
+    transform: translate3d(-100%, 0, 0);
+  }
+}
+
+/* ==========================================================================
+   5. Progress Bar & Percentage
+   ========================================================================== */
+
+.dl-progress-wrapper {
+  width: 100%;
+  max-width: 440px;
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dl-progress-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.dl-progress-track {
+  position: relative;
+  flex: 1;
+  height: var(--dl-progress-height);
+  background-color: var(--dl-bar-bg);
+  border: 2px solid var(--dl-fg);
+  padding: 1px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.dl-progress-fill {
+  height: 100%;
+  background-color: var(--dl-fg);
+  width: 0%;
+  transition: width 0.15s linear;
+}
+
+/* Indeterminate Mode: Scanning block */
+.dinoloader[data-indeterminate="true"] .dl-progress-fill {
+  width: 30% !important;
+  animation: dl-indeterminate-scan 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite alternate;
+}
+
+@keyframes dl-indeterminate-scan {
+  0% {
+    transform: translate3d(0, 0, 0);
+  }
+  100% {
+    transform: translate3d(233%, 0, 0);
+  }
+}
+
+/* Progress Percentage */
+.dl-progress-percent {
+  font-size: var(--dl-font-size);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  min-width: 44px;
+  text-align: right;
+  color: var(--dl-fg);
+  font-variant-numeric: tabular-nums;
+}
+
+.dinoloader[data-show-percentage="false"] .dl-progress-percent {
+  display: none;
+}
+
+/* Error / Complete state styling for progress */
+.dinoloader[data-state="error"] .dl-progress-track {
+  border-color: var(--dl-error);
+}
+.dinoloader[data-state="error"] .dl-progress-fill {
+  background-color: var(--dl-error);
+}
+.dinoloader[data-state="error"] .dl-progress-percent {
+  color: var(--dl-error);
+}
+
+.dinoloader[data-state="complete"] .dl-progress-track {
+  border-color: var(--dl-success);
+}
+.dinoloader[data-state="complete"] .dl-progress-fill {
+  background-color: var(--dl-success);
+}
+.dinoloader[data-state="complete"] .dl-progress-percent {
+  color: var(--dl-success);
+}
+
+/* ==========================================================================
+   Loading Message & Status Label
+   ========================================================================== */
+
+.dl-message-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  min-height: 18px;
+}
+
+.dl-message-text {
+  font-size: var(--dl-font-size);
+  color: var(--dl-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-weight: 500;
+}
+
+.dl-status-badge {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 3px;
+  background-color: var(--dl-bar-bg);
+  color: var(--dl-muted);
+  border: 1px solid var(--dl-border);
+}
+
+.dinoloader[data-state="running"] .dl-status-badge {
+  color: var(--dl-accent);
+  border-color: var(--dl-accent);
+}
+
+.dinoloader[data-state="complete"] .dl-status-badge {
+  color: var(--dl-success);
+  border-color: var(--dl-success);
+}
+
+.dinoloader[data-state="error"] .dl-status-badge {
+  color: var(--dl-error);
+  border-color: var(--dl-error);
+}
+
+/* ==========================================================================
+   Reduced Motion Accessibility
+   ========================================================================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .dinoloader *,
+  .dinoloader *::before,
+  .dinoloader *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+  .dl-ground-texture-track {
+    transform: none !important;
+  }
+  .dl-dino-run-group {
+    display: block !important;
+    opacity: 1 !important;
+  }
+  .dl-dino-run-1 {
+    display: block !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  .dl-dino-run-2,
+  .dl-dino-jump {
+    display: none !important;
+  }
+  .dl-cactus-item {
+    display: none !important;
+  }
+}
+
+.dinoloader.dl-reduced-motion *,
+.dinoloader.dl-reduced-motion *::before,
+.dinoloader.dl-reduced-motion *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+.dinoloader.dl-reduced-motion .dl-ground-texture-track {
+  transform: none !important;
+}
+
+.dinoloader.dl-reduced-motion .dl-dino-run-group {
+  display: block !important;
+  opacity: 1 !important;
+}
+
+.dinoloader.dl-reduced-motion .dl-dino-run-1 {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.dinoloader.dl-reduced-motion .dl-dino-run-2,
+.dinoloader.dl-reduced-motion .dl-dino-jump {
+  display: none !important;
+}
+
+.dinoloader.dl-reduced-motion .dl-cactus-item {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Paused Execution Mode (Zero CPU/GPU overhead when hidden)
+   ========================================================================== */
+
+.dinoloader.dl-paused *,
+.dinoloader.dl-paused *::before,
+.dinoloader.dl-paused *::after {
+  animation-play-state: paused !important;
+}
