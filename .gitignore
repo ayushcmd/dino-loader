@@ -14,6 +14,14 @@ dist-demo/
 .env
 .env.*
 *.local
+.npmrc
+**/.npmrc
+
+# GitHub Packages staging build artifacts
+github-package/dist/
+github-package/README.md
+github-package/LICENSE
+github-package/*.tgz
 
 # Logs
 logs/

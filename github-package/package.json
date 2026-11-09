@@ -1,0 +1,65 @@
+{
+  "name": "@ayushcmd/dinoloader",
+  "version": "0.1.0-alpha.1",
+  "description": "A lightweight, customizable retro pixel-art dinosaur loading component with zero dependencies",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
+    "./style.css": "./dist/style.css",
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "keywords": [
+    "loader",
+    "loading",
+    "spinner",
+    "dinosaur",
+    "pixel-art",
+    "retro",
+    "8bit",
+    "progress-bar",
+    "vanilla-js",
+    "zero-dependencies"
+  ],
+  "author": "Ayush Kumar (https://github.com/ayushcmd)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ayushcmd/dino-loader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ayushcmd/dino-loader/issues"
+  },
+  "homepage": "https://github.com/ayushcmd/dino-loader#readme"
+}
