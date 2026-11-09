@@ -57,4 +57,18 @@ describe('DinoLoader Distribution Package Verification', () => {
 
     loader.destroy();
   });
+
+  test('ESM React dist exposes DinoLoader and useDinoLoader', async () => {
+    const esmReact = await import('../dist/react.js');
+    assert.equal(typeof esmReact.DinoLoader, 'function');
+    assert.equal(typeof esmReact.default, 'function');
+    assert.equal(typeof esmReact.useDinoLoader, 'function');
+  });
+
+  test('CommonJS React dist exposes DinoLoader and useDinoLoader via require()', () => {
+    const cjsReact = require('../dist/react.cjs');
+    assert.equal(typeof cjsReact.DinoLoader, 'function');
+    assert.equal(typeof cjsReact.default, 'function');
+    assert.equal(typeof cjsReact.useDinoLoader, 'function');
+  });
 });

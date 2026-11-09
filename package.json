@@ -12,6 +12,11 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs"
     },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.js",
+      "require": "./dist/react.cjs"
+    },
     "./style.css": "./dist/style.css",
     "./package.json": "./package.json"
   },
@@ -24,10 +29,22 @@
     "dev": "vite",
     "pretest": "npm run build",
     "test": "node --test test/*.test.js",
-    "build": "vite build && node -e \"fs.copyFileSync('src/dinoloader/types.d.ts', 'dist/index.d.ts')\"",
+    "build": "vite build && node -e \"fs.copyFileSync('src/dinoloader/types.d.ts', 'dist/index.d.ts'); fs.copyFileSync('src/react/types.d.ts', 'dist/react.d.ts')\"",
     "build:demo": "vite build --config vite.demo.config.js",
     "prepare": "npm run build",
     "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
   },
   "keywords": [
     "loader",
@@ -44,6 +61,9 @@
   "author": "DinoLoader Team",
   "license": "MIT",
   "devDependencies": {
+    "jsdom": "^29.1.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
     "vite": "^8.3.6"
   }
 }

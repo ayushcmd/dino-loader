@@ -94,26 +94,140 @@ loader.complete("All assets loaded!");
 
 ---
 
-## ⚛️ Future React API
+## ⚛️ React Integration
+
+DinoLoader provides a first-class React adapter under `dinoloader/react`, compatible with both **React 18** and **React 19**.
+
+React is configured as an optional peer dependency (`react >= 18.0.0`, `react-dom >= 18.0.0`), meaning it introduces zero bloat into the core Vanilla JS package.
+
+### Installation
+
+```bash
+npm install dinoloader
+```
+
+Import the CSS once in your application entry file (e.g. `main.jsx` or `App.jsx`):
+
+```javascript
+import "dinoloader/style.css";
+```
+
+### 1. Declarative `<DinoLoader />` Component
+
+Embed directly inside your JSX tree:
 
 ```jsx
+import React, { useState, useEffect } from "react";
 import { DinoLoader } from "dinoloader/react";
 
-function LoadingDashboard({ isLoading, progress }) {
+export function DashboardLoader() {
+  const [progress, setProgress] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setProgress((prev) => (prev < 100 ? prev + 10 : 100));
+    }, 400);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <div style={{ maxWidth: 640, margin: "40px auto" }}>
+      <DinoLoader
+        loading={progress < 100}
+        progress={progress}
+        mode="inline"
+        theme="dark"
+        size="medium"
+        message={progress < 100 ? "Fetching dinosaur telemetry..." : "Telemetry synchronized!"}
+        animationSpeed="normal"
+        showPercentage={true}
+        onComplete={() => console.log("Loading completed!")}
+      />
+    </div>
+  );
+}
+```
+
+### 2. Fullscreen Page-Blocking Overlay
+
+When `mode="fullscreen"`, `<DinoLoader />` mounts directly into `document.body`, locks scrolling safely across multiple instances, and cleans up automatically on unmount:
+
+```jsx
+import React from "react";
+import { DinoLoader } from "dinoloader/react";
+
+export function FullscreenBlockingLoader({ isAuthenticating }) {
   return (
     <DinoLoader
-      loading={isLoading}
-      progress={progress}
-      mode="inline"
+      loading={isAuthenticating}
+      mode="fullscreen"
       theme="dark"
-      size="medium"
-      message="Fetching dashboard metrics..."
-      cactus={true}
-      clouds={true}
+      message="Securing your session..."
+      preventScroll={true}
+      zIndex={999999}
     />
   );
 }
 ```
+
+### 3. Programmatic Control with `useDinoLoader` Hook
+
+For imperative control from button clicks or asynchronous workflows:
+
+```jsx
+import React from "react";
+import { useDinoLoader } from "dinoloader/react";
+
+export function ExportWorkflow() {
+  const { show, hide, update, complete, error, progress, state } = useDinoLoader({
+    mode: "fullscreen",
+    theme: "dark"
+  });
+
+  const handleExport = async () => {
+    show();
+    update(25);
+    await new Promise((r) => setTimeout(r, 800));
+
+    update(75);
+    await new Promise((r) => setTimeout(r, 800));
+
+    complete("Export package ready!");
+    setTimeout(hide, 1200);
+  };
+
+  return (
+    <div>
+      <button onClick={handleExport}>Export Data</button>
+      <p>State: {state} ({progress}%)</p>
+    </div>
+  );
+}
+```
+
+### 📋 React Component Props Reference
+
+| Prop | Type | Default | Description |
+| :--- | :--- | :--- | :--- |
+| `loading` | `boolean` | `true` | Controls whether the loader is visible. Pauses animations when `false`. |
+| `progress` | `number \| boolean` | `undefined` | Progress (0–100). If omitted or `false`, runs in indeterminate scan mode. |
+| `mode` | `'inline' \| 'fullscreen'` | `'inline'` | `'inline'` embeds in parent; `'fullscreen'` covers the viewport. |
+| `theme` | `'dark' \| 'light' \| 'auto'` | `'dark'` | Color scheme (`'dark'` #0d1117, `'light'` #f6f8fa, or system auto). |
+| `size` | `'small' \| 'medium' \| 'large'` | `'medium'` | Dinosaur scale preset (small 48px, medium 66px, large 84px). |
+| `message` | `string` | `'Loading your experience...'` | Description text beneath the progress bar. |
+| `animationSpeed`| `'slow' \| 'normal' \| 'fast'` | `'normal'` | Animation step and translation speed (alias: `speed`). |
+| `showPercentage`| `boolean` | `true` | Toggle display of numerical `XX%` label. |
+| `cactus` | `boolean` | `true` | Enable or disable moving cactus obstacles. |
+| `clouds` | `boolean` | `true` | Enable or disable background floating pixel clouds. |
+| `autojump` | `boolean` | `true` | Automatically hops over approaching cactus obstacles. |
+| `reducedMotion`| `boolean` | `false` | Explicitly enforce reduced-motion mode. |
+| `zIndex` | `number \| null` | `null` | Custom z-index for fullscreen overlay mode. |
+| `background` | `string \| null` | `null` | Custom CSS background override for the canvas stage. |
+| `preventScroll`| `boolean` | `true` | Safely locks `document.body` scrolling in fullscreen mode. |
+| `className` | `string` | `''` | Custom CSS class for the inline wrapper container. |
+| `style` | `React.CSSProperties` | `{}` | Inline CSS styles for the inline wrapper container. |
+| `onComplete` | `() => void` | `null` | Fired when progress reaches 100% or `complete()` is triggered. |
+| `onError` | `(error: Error) => void` | `null` | Fired when an error state occurs. |
 
 ---
 
@@ -169,20 +283,30 @@ function LoadingDashboard({ isLoading, progress }) {
 C:\Projects\npm\DinoLoader\
 ├── index.html                  # Developer playground entry page
 ├── package.json                # Project configuration & npm scripts
-├── vite.config.js              # Vite bundler configuration
+├── vite.config.js              # Vite multi-entry library bundler configuration
 ├── README.md                   # Documentation & API reference
 ├── src\
 │   ├── main.js                 # Playground UI controller & simulation orchestrator
 │   ├── playground.css          # Developer tool styling (themeable, responsive)
-│   └── dinoloader\             # Standalone component core
-│       ├── index.js            # Public exports: createDinoLoader & DinoLoader class
-│       ├── dinoloader.css      # Scoped component styles (.dinoloader, .dl-*)
-│       ├── types.d.ts          # Complete TypeScript declarations & JSDoc
-│       └── assets\
-│           ├── pixelUtils.js   # Run-length encoded ASCII-to-SVG vector generator
-│           ├── dino.js         # Original pixel-art dinosaur poses (run, jump, crash, win)
-│           ├── obstacles.js    # Cactus variants, clouds, and seamless ground pattern
-│           └── index.js        # Re-export barrel
+│   ├── dinoloader\             # Standalone Vanilla JS engine (zero dependencies)
+│   │   ├── index.js            # Public exports: createDinoLoader & DinoLoader class
+│   │   ├── dinoloader.css      # Scoped component styles (.dinoloader, .dl-*)
+│   │   ├── types.d.ts          # Core TypeScript declarations & JSDoc
+│   │   ├── core\               # DinoLoader orchestrator & lifecycle
+│   │   ├── dom\                # DOM tree renderer & state binding
+│   │   ├── progress\           # Determinate & indeterminate progress engine
+│   │   ├── animation\          # CSS animation controller & autojump detector
+│   │   ├── theme\              # Theme manager & multi-instance scroll-lock
+│   │   └── assets\             # Original vector pixel-art sprites (SVG)
+│   └── react\                  # React Adapter (compatible with React 18 & 19)
+│       ├── index.js            # React entry point: DinoLoader & useDinoLoader
+│       ├── DinoLoader.jsx      # Declarative <DinoLoader /> component
+│       ├── useDinoLoader.js    # Programmatic hook
+│       └── types.d.ts          # React TypeScript definitions
+├── test\
+│   ├── dinoloader.test.js      # Unit and lifecycle tests for core engine
+│   ├── dist.test.js            # ESM & CJS distribution verification
+│   └── react.test.js           # React 18 & 19 mount, prop updates, and StrictMode tests
 ```
 
 ---
