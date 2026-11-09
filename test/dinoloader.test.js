@@ -131,7 +131,7 @@ globalThis.window = {
 // Now import DinoLoader modules
 const { createDinoLoader, DinoLoader } = await import('../src/dinoloader/core/DinoLoader.js');
 const { ProgressManager } = await import('../src/dinoloader/progress/progressManager.js');
-const { ThemeManager } = await import('../src/dinoloader/theme/themeManager.js');
+const { ThemeManager, ScrollLock } = await import('../src/dinoloader/theme/themeManager.js');
 const { AnimationManager } = await import('../src/dinoloader/animation/animationManager.js');
 
 describe('DinoLoader Phase 2 Engine Tests', () => {
@@ -204,6 +204,7 @@ describe('DinoLoader Phase 2 Engine Tests', () => {
     });
 
     test('fullscreen mode locks body scroll on show and restores on hide/destroy', () => {
+      ScrollLock.reset();
       globalThis.document.body.style.overflow = 'auto';
 
       const loader = createDinoLoader({ mode: 'fullscreen', preventScroll: true });
@@ -219,6 +220,36 @@ describe('DinoLoader Phase 2 Engine Tests', () => {
 
       loader.destroy();
       assert.equal(globalThis.document.body.style.overflow, 'auto');
+    });
+
+    test('shared scroll lock management prevents premature unlock when multiple fullscreen instances are active', () => {
+      ScrollLock.reset();
+      globalThis.document.body.style.overflow = 'scroll';
+
+      const loaderA = createDinoLoader({ mode: 'fullscreen', preventScroll: true });
+      const loaderB = createDinoLoader({ mode: 'fullscreen', preventScroll: true });
+
+      // Instance A locks
+      loaderA.show();
+      assert.equal(globalThis.document.body.style.overflow, 'hidden');
+      assert.equal(ScrollLock.getActiveCount(), 1);
+
+      // Instance B also locks
+      loaderB.show();
+      assert.equal(globalThis.document.body.style.overflow, 'hidden');
+      assert.equal(ScrollLock.getActiveCount(), 2);
+
+      // Instance A is hidden/closed -> Instance B still needs lock!
+      loaderA.hide();
+      assert.equal(globalThis.document.body.style.overflow, 'hidden');
+      assert.equal(ScrollLock.getActiveCount(), 1);
+
+      // Instance B is destroyed -> last one releases, restores original style!
+      loaderB.destroy();
+      assert.equal(globalThis.document.body.style.overflow, 'scroll');
+      assert.equal(ScrollLock.getActiveCount(), 0);
+
+      loaderA.destroy();
     });
 
     test('fullscreen mode applies custom zIndex and background', () => {
@@ -413,6 +444,46 @@ describe('DinoLoader Phase 2 Engine Tests', () => {
   });
 
   describe('9. Idempotent Calls & Safe Teardown', () => {
+    test('show() and hide() can be called repeatedly without duplicate listeners or state corruption', () => {
+      const loader = createDinoLoader({ mode: 'fullscreen' });
+
+      // Call show() 4 times consecutively
+      loader.show();
+      loader.show();
+      loader.show();
+      loader.show();
+
+      assert.equal(loader.isVisible, true);
+      assert.equal(loader.isMounted, true);
+
+      // Call hide() 4 times consecutively
+      loader.hide();
+      loader.hide();
+      loader.hide();
+      loader.hide();
+
+      assert.equal(loader.isVisible, false);
+
+      loader.destroy();
+    });
+
+    test('complete() can be called repeatedly without throwing or re-triggering callbacks', () => {
+      let callbackCount = 0;
+      const loader = createDinoLoader({
+        onComplete: () => { callbackCount++; }
+      });
+
+      loader.complete();
+      loader.complete();
+      loader.complete();
+
+      assert.equal(loader.getProgress(), 100);
+      assert.equal(loader.getState(), 'complete');
+      assert.equal(callbackCount, 1); // Callback only fires once on initial transition
+
+      loader.destroy();
+    });
+
     test('destroy() can be called multiple times without throwing errors', () => {
       const loader = createDinoLoader();
       loader.show();

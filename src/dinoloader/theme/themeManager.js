@@ -1,25 +1,25 @@
+import { ScrollLock } from './scrollLock.js';
+
+let instanceSeq = 0;
+
 /**
  * Theme & Display Mode Manager for DinoLoader
- * Handles theme application, custom colors, z-index, and body scroll lock restoration.
+ * Handles theme application, custom colors, z-index, and instance-aware body scroll lock.
  */
-
-// Global scroll lock counter to handle multiple concurrent fullscreen instances safely
-let scrollLockCount = 0;
-let originalBodyOverflow = '';
-
 export class ThemeManager {
   /**
    * @param {HTMLElement} rootElement
    * @param {Object} options
+   * @param {string} [instanceId]
    */
-  constructor(rootElement, options = {}) {
+  constructor(rootElement, options = {}, instanceId = null) {
     this.root = rootElement;
+    this.instanceId = instanceId || `dl_${++instanceSeq}_${Date.now()}`;
     this.theme = this._sanitizeTheme(options.theme || 'dark');
     this.mode = options.mode || 'inline';
     this.preventScroll = options.preventScroll !== false;
     this.zIndex = options.zIndex !== undefined ? options.zIndex : null;
     this.background = options.background || null;
-    this._isScrollLocked = false;
 
     this.apply();
   }
@@ -80,38 +80,24 @@ export class ThemeManager {
       this.root.dataset.mode = this.mode;
     }
 
-    // If switching from fullscreen to inline, release scroll lock
     if (prevMode === 'fullscreen' && this.mode === 'inline') {
       this.unlockBodyScroll();
     }
   }
 
   /**
-   * Locks document body scrolling when entering fullscreen mode
+   * Locks document body scrolling for this instance
    */
   lockBodyScroll() {
-    if (typeof document === 'undefined' || !document.body) return;
-    if (this.mode !== 'fullscreen' || !this.preventScroll || this._isScrollLocked) return;
-
-    if (scrollLockCount === 0) {
-      originalBodyOverflow = document.body.style.overflow || '';
-      document.body.style.overflow = 'hidden';
-    }
-    scrollLockCount++;
-    this._isScrollLocked = true;
+    if (this.mode !== 'fullscreen' || !this.preventScroll) return;
+    ScrollLock.lock(this.instanceId);
   }
 
   /**
-   * Restores document body scrolling when hiding or destroying fullscreen mode
+   * Releases document body scrolling for this instance
    */
   unlockBodyScroll() {
-    if (typeof document === 'undefined' || !document.body || !this._isScrollLocked) return;
-
-    scrollLockCount = Math.max(0, scrollLockCount - 1);
-    if (scrollLockCount === 0) {
-      document.body.style.overflow = originalBodyOverflow;
-    }
-    this._isScrollLocked = false;
+    ScrollLock.unlock(this.instanceId);
   }
 
   /**
@@ -121,3 +107,5 @@ export class ThemeManager {
     this.unlockBodyScroll();
   }
 }
+
+export { ScrollLock };

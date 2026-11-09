@@ -3,6 +3,8 @@ import { ProgressManager } from '../progress/progressManager.js';
 import { AnimationManager } from '../animation/animationManager.js';
 import { ThemeManager } from '../theme/themeManager.js';
 
+let loaderInstanceCount = 0;
+
 /**
  * Default configuration options for DinoLoader
  */
@@ -19,7 +21,7 @@ export const DEFAULT_OPTIONS = {
   cactus: true,                 // boolean
   clouds: true,                 // boolean
   autojump: true,               // boolean
-  reducedMotion: false,         // boolean
+  reducedMotion: undefined,     // boolean | undefined (auto-detects OS preference if undefined)
   container: null,              // HTMLElement | string | null
   zIndex: null,                 // number | null (for fullscreen mode)
   background: null,             // string | null (custom background override)
@@ -39,9 +41,11 @@ export class DinoLoader {
       this.options.speed = options.animationSpeed;
     }
 
+    this.id = `dinoloader_${++loaderInstanceCount}_${Date.now()}`;
     this.isMounted = false;
     this.isVisible = false;
     this.isDestroyed = false;
+    this._hasKeyDownListener = false;
 
     this._onCloseClick = this._onCloseClick.bind(this);
     this._onKeyDown = this._onKeyDown.bind(this);
@@ -50,7 +54,7 @@ export class DinoLoader {
     this.renderer = new Renderer(this.options);
     const rootEl = this.renderer.dom.root;
 
-    this.themeManager = new ThemeManager(rootEl, this.options);
+    this.themeManager = new ThemeManager(rootEl, this.options, this.id);
     this.progressManager = new ProgressManager(this.renderer.dom, this.options);
     this.animationManager = new AnimationManager(rootEl, this.options);
 
@@ -75,13 +79,14 @@ export class DinoLoader {
    * @private
    */
   _onKeyDown(e) {
-    if (e.key === 'Escape' && this.themeManager.mode === 'fullscreen') {
+    if (e.key === 'Escape' && this.themeManager.mode === 'fullscreen' && this.isVisible) {
       this.hide();
     }
   }
 
   /**
-   * Displays the loader in the container
+   * Displays the loader in the container.
+   * Safe and idempotent if called repeatedly.
    * @param {HTMLElement|string} [target]
    * @returns {DinoLoader}
    */
@@ -91,11 +96,13 @@ export class DinoLoader {
     const mountTarget = target || this.options.container;
     const mounted = this.renderer.mount(mountTarget);
 
-    if (mounted && !this.isMounted) {
+    if (mounted) {
       this.isMounted = true;
-      if (typeof window !== 'undefined') {
-        window.addEventListener('keydown', this._onKeyDown);
-      }
+    }
+
+    if (typeof window !== 'undefined' && !this._hasKeyDownListener) {
+      window.addEventListener('keydown', this._onKeyDown);
+      this._hasKeyDownListener = true;
     }
 
     if (this.renderer.dom.root) {
@@ -113,7 +120,8 @@ export class DinoLoader {
   }
 
   /**
-   * Hides the loader and pauses animations to eliminate background resource usage
+   * Hides the loader and pauses animations to eliminate background resource usage.
+   * Safe and idempotent if called repeatedly.
    * @returns {DinoLoader}
    */
   hide() {
@@ -127,12 +135,18 @@ export class DinoLoader {
     this.animationManager.pause();
     this.themeManager.unlockBodyScroll();
 
+    if (typeof window !== 'undefined' && this._hasKeyDownListener) {
+      window.removeEventListener('keydown', this._onKeyDown);
+      this._hasKeyDownListener = false;
+    }
+
     return this;
   }
 
   /**
-   * Updates actual determinate progress value (0–100)
-   * @param {*} value Progress percentage (sanitized and clamped)
+   * Updates actual determinate progress value (0–100).
+   * Automatically sanitizes and clamps out-of-range values.
+   * @param {*} value Progress percentage
    * @returns {DinoLoader}
    */
   update(value) {
@@ -157,12 +171,14 @@ export class DinoLoader {
   complete(completionMessage = 'Loading complete!') {
     if (this.isDestroyed) return this;
 
+    const wasComplete = this.animationManager.state === 'complete';
+
     this.progressManager.update(100);
     this.animationManager.setState('complete');
     this.renderer.setMessage(completionMessage);
     this.renderer.setStatus('COMPLETE');
 
-    if (typeof this.options.onComplete === 'function') {
+    if (!wasComplete && typeof this.options.onComplete === 'function') {
       this.options.onComplete();
     }
 
@@ -321,13 +337,15 @@ export class DinoLoader {
 
   /**
    * Completely destroys instance, cleaning up all DOM elements, event listeners,
-   * animations, and restored body styles.
+   * animations, media query listeners, and restored body styles.
+   * Safe and idempotent if called repeatedly.
    */
   destroy() {
     if (this.isDestroyed) return;
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && this._hasKeyDownListener) {
       window.removeEventListener('keydown', this._onKeyDown);
+      this._hasKeyDownListener = false;
     }
     if (this.renderer.dom.closeBtn) {
       this.renderer.dom.closeBtn.removeEventListener('click', this._onCloseClick);
@@ -335,6 +353,7 @@ export class DinoLoader {
 
     this.themeManager.destroy();
     this.animationManager.pause();
+    this.animationManager.destroy();
     this.renderer.destroy();
 
     this.isMounted = false;

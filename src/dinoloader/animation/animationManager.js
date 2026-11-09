@@ -1,7 +1,7 @@
 /**
  * Animation Engine for DinoLoader
  * Controls running states, obstacle toggles, animation speeds, sizing,
- * reduced-motion compliance, and execution pause/resume.
+ * reduced-motion compliance (with OS query listener), and execution pause/resume.
  */
 
 export class AnimationManager {
@@ -18,10 +18,16 @@ export class AnimationManager {
     this.cactus = options.cactus !== false;
     this.clouds = options.clouds !== false;
     this.autojump = options.autojump !== false;
-    this.reducedMotion = Boolean(options.reducedMotion);
     this.state = 'running'; // 'running' | 'idle' | 'complete' | 'error'
     this.isPaused = false;
 
+    // Reduced motion handling
+    this._explicitReducedMotion = options.reducedMotion !== undefined ? Boolean(options.reducedMotion) : null;
+    this.reducedMotion = false;
+    this._mediaQueryList = null;
+    this._onMotionQueryChange = this._onMotionQueryChange.bind(this);
+
+    this._setupReducedMotion();
     this.apply();
   }
 
@@ -37,6 +43,44 @@ export class AnimationManager {
     return 'medium';
   }
 
+  _setupReducedMotion() {
+    if (this._explicitReducedMotion !== null) {
+      this.reducedMotion = this._explicitReducedMotion;
+      return;
+    }
+
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      try {
+        this._mediaQueryList = window.matchMedia('(prefers-reduced-motion: reduce)');
+        this.reducedMotion = Boolean(this._mediaQueryList.matches);
+
+        if (this._mediaQueryList.addEventListener) {
+          this._mediaQueryList.addEventListener('change', this._onMotionQueryChange);
+        } else if (this._mediaQueryList.addListener) {
+          this._mediaQueryList.addListener(this._onMotionQueryChange);
+        }
+      } catch {
+        this.reducedMotion = false;
+      }
+    }
+  }
+
+  _onMotionQueryChange(e) {
+    if (this._explicitReducedMotion === null) {
+      this.reducedMotion = Boolean(e.matches);
+      this._updateMotionClass();
+    }
+  }
+
+  _updateMotionClass() {
+    if (!this.root) return;
+    if (this.reducedMotion) {
+      this.root.classList.add('dl-reduced-motion');
+    } else {
+      this.root.classList.remove('dl-reduced-motion');
+    }
+  }
+
   apply() {
     if (!this.root) return;
 
@@ -47,11 +91,7 @@ export class AnimationManager {
     this.root.dataset.autojump = String(this.autojump);
     this.root.dataset.state = this.state;
 
-    if (this.reducedMotion) {
-      this.root.classList.add('dl-reduced-motion');
-    } else {
-      this.root.classList.remove('dl-reduced-motion');
-    }
+    this._updateMotionClass();
 
     if (this.isPaused) {
       this.root.classList.add('dl-paused');
@@ -134,14 +174,9 @@ export class AnimationManager {
    * @param {boolean} enabled
    */
   setReducedMotion(enabled) {
-    this.reducedMotion = Boolean(enabled);
-    if (this.root) {
-      if (this.reducedMotion) {
-        this.root.classList.add('dl-reduced-motion');
-      } else {
-        this.root.classList.remove('dl-reduced-motion');
-      }
-    }
+    this._explicitReducedMotion = Boolean(enabled);
+    this.reducedMotion = this._explicitReducedMotion;
+    this._updateMotionClass();
   }
 
   /**
@@ -161,6 +196,20 @@ export class AnimationManager {
     this.isPaused = false;
     if (this.root) {
       this.root.classList.remove('dl-paused');
+    }
+  }
+
+  /**
+   * Cleans up media query listeners
+   */
+  destroy() {
+    if (this._mediaQueryList) {
+      if (this._mediaQueryList.removeEventListener) {
+        this._mediaQueryList.removeEventListener('change', this._onMotionQueryChange);
+      } else if (this._mediaQueryList.removeListener) {
+        this._mediaQueryList.removeListener(this._onMotionQueryChange);
+      }
+      this._mediaQueryList = null;
     }
   }
 }
